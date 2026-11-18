@@ -13,6 +13,34 @@ void bi_decl_config()
     bi_decl(bi_1pin_with_name(PROBE_PIN_RESET, "PROBE RESET"));
 #endif
 
+#ifdef PROBE_0_PIN_SWCLK
+    bi_decl(bi_1pin_with_name(PROBE_0_PIN_SWCLK, "PROBE 0 SWCLK"));
+    bi_decl(bi_1pin_with_name(PROBE_0_PIN_SWDIO, "PROBE 0 SWDIO"));
+#if defined(PROBE_0_PIN_SWDI) && (PROBE_0_PIN_SWDI >= 0)
+    bi_decl(bi_1pin_with_name(PROBE_0_PIN_SWDI, "PROBE 0 SWDI"));
+#endif
+#if defined(PROBE_0_PIN_RESET) && (PROBE_0_PIN_RESET >= 0)
+    bi_decl(bi_1pin_with_name(PROBE_0_PIN_RESET, "PROBE 0 RESET"));
+#endif
+#if defined(PROBE_0_PIN_LED) && (PROBE_0_PIN_LED >= 0)
+    bi_decl(bi_1pin_with_name(PROBE_0_PIN_LED, "PROBE 0 LED"));
+#endif
+#endif
+
+#ifdef PROBE_1_PIN_SWCLK
+    bi_decl(bi_1pin_with_name(PROBE_1_PIN_SWCLK, "PROBE 1 SWCLK"));
+    bi_decl(bi_1pin_with_name(PROBE_1_PIN_SWDIO, "PROBE 1 SWDIO"));
+#if defined(PROBE_1_PIN_SWDI) && (PROBE_1_PIN_SWDI >= 0)
+    bi_decl(bi_1pin_with_name(PROBE_1_PIN_SWDI, "PROBE 1 SWDI"));
+#endif
+#if defined(PROBE_1_PIN_RESET) && (PROBE_1_PIN_RESET >= 0)
+    bi_decl(bi_1pin_with_name(PROBE_1_PIN_RESET, "PROBE 1 RESET"));
+#endif
+#if defined(PROBE_1_PIN_LED) && (PROBE_1_PIN_LED >= 0)
+    bi_decl(bi_1pin_with_name(PROBE_1_PIN_LED, "PROBE 1 LED"));
+#endif
+#endif
+
 #ifdef PROBE_PIN_SWCLK
     bi_decl(bi_1pin_with_name(PROBE_PIN_SWCLK, "PROBE SWCLK"));
 #endif

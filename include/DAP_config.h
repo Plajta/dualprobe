@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2013-2021 ARM Limited. All rights reserved.
+ * Copyright (c) 2026 Plajta corp.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -505,6 +506,8 @@ It is recommended to provide the following LEDs for status indication:
 __STATIC_INLINE void LED_CONNECTED_OUT (uint32_t bit) {
 #ifdef PROBE_DAP_CONNECTED_LED
   gpio_put(PROBE_DAP_CONNECTED_LED, bit);
+#else
+  probe_set_led(bit);
 #endif
 }
 

@@ -2,6 +2,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2021 Raspberry Pi (Trading) Ltd.
+ * Copyright (c) 2026 Plajta corp.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,5 +49,6 @@ void probe_init(void);
 void probe_deinit(void);
 void probe_assert_reset(bool state);
 int probe_reset_level(void);
+void probe_set_led(bool state);
 
 #endif

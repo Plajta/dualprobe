@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2023 Raspberry Pi (Trading) Ltd.
+ * Copyright (c) 2026 Plajta corp.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -12,14 +13,17 @@
 static uint8_t itf_num;
 static uint8_t _rhport;
 
-
-static uint8_t _out_ep_addr;
-static uint8_t _in_ep_addr;
-
-static buffer_t USBRequestBuffer;
-static buffer_t USBResponseBuffer;
-
 static SemaphoreHandle_t edpt_spoon;
+
+dap_channel_t probe_channels[PROBE_COUNT];
+TaskHandle_t dap_taskhandles[PROBE_COUNT];
+
+#define USBRequestBuffer (p_ch->req_buf)
+#define USBResponseBuffer (p_ch->resp_buf)
+#define dap_taskhandle (p_ch->taskhandle)
+#define _out_ep_addr (p_ch->out_ep_addr)
+#define _in_ep_addr (p_ch->in_ep_addr)
+#define DAP_ExecuteCommand(req, resp) dap_channel_execute((uint8_t)(p_ch - probe_channels), (req), (resp))
 
 #define WR_IDX(x) (x.wptr % DAP_PACKET_COUNT)
 #define RD_IDX(x) (x.rptr % DAP_PACKET_COUNT)
@@ -41,6 +45,8 @@ bool buffer_empty(buffer_t *buffer)
 void dap_edpt_init(void) {
 	edpt_spoon = xSemaphoreCreateMutex();
 	xSemaphoreGive(edpt_spoon);
+
+	dap_channel_init();
 }
 
 // This only gets called if the SOF watchdog times out
@@ -49,12 +55,16 @@ bool dap_edpt_deinit(void)
 	if (edpt_spoon != NULL)
 		vSemaphoreDelete(edpt_spoon);
 	edpt_spoon = NULL;
+
+	dap_channel_deinit();
 	return true;
 }
 
 void dap_edpt_reset(uint8_t __unused rhport)
 {
 	probe_info("dap_edpt_reset\n");
+	for (int i = 0; i < PROBE_COUNT; i++) {
+	dap_channel_t *p_ch = &probe_channels[i];
 	memset(&USBRequestBuffer, 0, sizeof(USBRequestBuffer));
 	memset(&USBResponseBuffer, 0, sizeof(USBResponseBuffer));
 
@@ -69,6 +79,7 @@ void dap_edpt_reset(uint8_t __unused rhport)
 	USBResponseBuffer.wasEmpty = true;
 	USBRequestBuffer.wasFull = false;
 	USBRequestBuffer.wasEmpty = true;
+	}
 	// Linux resets us twice in succession
 
 	itf_num = 0;
@@ -116,6 +127,9 @@ uint16_t dap_edpt_open(uint8_t __unused rhport, tusb_desc_interface_t const *itf
 	uint16_t const drv_len = sizeof(tusb_desc_interface_t) + (itf_desc->bNumEndpoints * sizeof(tusb_desc_endpoint_t));
 	TU_VERIFY(max_len >= drv_len, 0);
 	itf_num = itf_desc->bInterfaceNumber;
+	if (itf_num >= PROBE_COUNT) return 0;
+	dap_channel_t *p_ch = &probe_channels[itf_num];
+	p_ch->itf_num = itf_num;
 
 	// Initialising the OUT endpoint
 
@@ -141,7 +155,6 @@ uint16_t dap_edpt_open(uint8_t __unused rhport, tusb_desc_interface_t const *itf
 	// Spawn DAP thread?
 
 	return drv_len;
-
 }
 
 bool dap_edpt_control_xfer_cb(uint8_t __unused rhport, uint8_t stage, tusb_control_request_t const *request)
@@ -152,6 +165,17 @@ bool dap_edpt_control_xfer_cb(uint8_t __unused rhport, uint8_t stage, tusb_contr
 // Manage USBResponseBuffer (request) write and USBRequestBuffer (response) read indices
 bool dap_edpt_xfer_cb(uint8_t __unused rhport, uint8_t ep_addr, xfer_result_t result, uint32_t xferred_bytes)
 {
+	(void) result;
+	int ch = -1;
+	for (int i = 0; i < PROBE_COUNT; i++) {
+		if (probe_channels[i].out_ep_addr == ep_addr || probe_channels[i].in_ep_addr == ep_addr) {
+			ch = i;
+			break;
+		}
+	}
+	if (ch < 0) return false;
+	dap_channel_t *p_ch = &probe_channels[ch];
+
 	const uint8_t ep_dir = tu_edpt_dir(ep_addr);
 
 	if(ep_dir == TUSB_DIR_IN)
@@ -204,6 +228,10 @@ bool dap_edpt_xfer_cb(uint8_t __unused rhport, uint8_t ep_addr, xfer_result_t re
 
 void dap_thread(void *ptr)
 {
+	uint32_t probe_idx = (uint32_t)(uintptr_t)ptr;
+	if (probe_idx >= PROBE_COUNT) return;
+	dap_channel_t *p_ch = &probe_channels[probe_idx];
+
 	uint32_t n;
 	uint32_t cmd;
 	uint16_t resp_len;
@@ -298,4 +326,3 @@ usbd_class_driver_t const *usbd_app_driver_get_cb(uint8_t *driver_count)
 	*driver_count = sizeof(_edpt_drivers) / sizeof(_edpt_drivers[0]);
 	return _edpt_drivers;
 }
-

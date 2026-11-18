@@ -2,6 +2,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2023 Raspberry Pi (Trading) Ltd.
+ * Copyright (c) 2026 Plajta corp.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,9 +28,7 @@
 #define BOARD_CONFIG_H_
 
 #include "pico/stdlib.h"
-#if defined(RASPBERRYPI_DEBUG_PROBE)
-#include "board_debug_probe_config.h"
-#elif defined(RASPBERRYPI_PICO) || defined(RASPBERRYPI_PICO2)
+#if defined(RASPBERRYPI_PICO) || defined(RASPBERRYPI_PICO2)
 #include "board_pico_config.h"
 #else
 #error Unsupported board

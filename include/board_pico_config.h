@@ -2,6 +2,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2023 Raspberry Pi (Trading) Ltd.
+ * Copyright (c) 2026 Plajta corp.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,13 +30,21 @@
 #define PROBE_IO_RAW
 #define PROBE_CDC_UART
 
+#define PROBE_COUNT 2
+
 // PIO config
-#define PROBE_SM 0
-#define PROBE_PIN_OFFSET 2
-#define PROBE_PIN_SWCLK (PROBE_PIN_OFFSET + 0) // 2
-#define PROBE_PIN_SWDIO (PROBE_PIN_OFFSET + 1) // 3
-// Target reset config
-#define PROBE_PIN_RESET 1
+#define PROBE_0_SM 0
+#define PROBE_1_SM 1
+#define PROBE_0_PIN_OFFSET 2
+#define PROBE_1_PIN_OFFSET 14
+
+#define PROBE_0_PIN_SWCLK (PROBE_0_PIN_OFFSET + 0) // 2
+#define PROBE_0_PIN_SWDIO (PROBE_0_PIN_OFFSET + 1) // 3
+#define PROBE_1_PIN_SWCLK (PROBE_1_PIN_OFFSET + 0) // 14
+#define PROBE_1_PIN_SWDIO (PROBE_1_PIN_OFFSET + 1) // 15
+// Target reset config - set to -1 to disable
+#define PROBE_0_PIN_RESET 1
+#define PROBE_1_PIN_RESET 13
 
 // UART config
 #define PROBE_UART_TX 4
@@ -44,7 +53,9 @@
 #define PROBE_UART_BAUDRATE 115200
 
 #define PROBE_USB_CONNECTED_LED 25
+#define PROBE_0_PIN_LED 18
+#define PROBE_1_PIN_LED 19
 
-#define PROBE_PRODUCT_STRING "Debugprobe on Pico (CMSIS-DAP)"
+#define PROBE_PRODUCT_STRING "Dualprobe on Pico (CMSIS-DAP)"
 
 #endif

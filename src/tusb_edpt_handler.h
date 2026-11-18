@@ -1,5 +1,6 @@
 /**
  * Copyright (c) 2023 Raspberry Pi (Trading) Ltd.
+ * Copyright (c) 2026 Plajta corp.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -26,10 +27,25 @@ typedef struct {
 	volatile bool wasFull;
 } buffer_t;
 
-extern TaskHandle_t dap_taskhandle, tud_taskhandle;
+typedef struct {
+    uint8_t itf_num;
+    uint8_t out_ep_addr;
+    uint8_t in_ep_addr;
+    buffer_t req_buf;
+    buffer_t resp_buf;
+    TaskHandle_t taskhandle;
+} dap_channel_t;
+
+extern dap_channel_t probe_channels[PROBE_COUNT];
+extern TaskHandle_t dap_taskhandles[PROBE_COUNT], tud_taskhandle;
 
 /* Main DAP loop */
 void dap_thread(void *ptr);
+
+/* Channel execution */
+void dap_channel_init(void);
+void dap_channel_deinit(void);
+uint16_t dap_channel_execute(uint8_t ch, const uint8_t *req, uint8_t *resp);
 
 /* Endpoint Handling */
 void dap_edpt_init(void);

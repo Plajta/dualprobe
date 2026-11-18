@@ -2,6 +2,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2021-2023 Raspberry Pi (Trading) Ltd.
+ * Copyright (c) 2026 Plajta corp.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -71,51 +72,46 @@ public read_cmd:
 ; Implement probe_gpio_init() and probe_sm_init() methods here - set pins, offsets, sidesets etc
 % c-sdk {
 
-static inline void probe_gpio_init()
+static inline void probe_gpio_init(uint pin_clk, uint pin_dio, int pin_reset)
 {
-#if defined(PROBE_PIN_RESET)
-    // Target reset pin: pull up, input to emulate open drain pin
-    gpio_pull_up(PROBE_PIN_RESET);
-    // gpio_init will leave the pin cleared and set as input
-    gpio_init(PROBE_PIN_RESET);
-#endif
+    if (pin_reset >= 0) {
+        // Target reset pin: pull up, input to emulate open drain pin
+        gpio_pull_up(pin_reset);
+        // gpio_init will leave the pin cleared and set as input
+        gpio_init(pin_reset);
+    }
     // Funcsel pins
-    pio_gpio_init(pio0, PROBE_PIN_SWCLK);
-    pio_gpio_init(pio0, PROBE_PIN_SWDIO);
+    pio_gpio_init(pio0, pin_clk);
+    pio_gpio_init(pio0, pin_dio);
     // Make sure SWDIO has a pullup on it. Idle state is high
-    gpio_pull_up(PROBE_PIN_SWDIO);
+    gpio_pull_up(pin_dio);
 }
 
 // DAP interface says all pins have to be High-Z when disabled
-static inline void probe_gpio_deinit()
+static inline void probe_gpio_deinit(uint pin_clk, uint pin_dio, int pin_reset)
 {
-#if defined(PROBE_PIN_RESET)
-	gpio_deinit(PROBE_PIN_RESET);
-	gpio_disable_pulls(PROBE_PIN_RESET);
-#endif
-	gpio_deinit(PROBE_PIN_SWCLK);
-	gpio_disable_pulls(PROBE_PIN_SWCLK);
-	gpio_deinit(PROBE_PIN_SWDIO);
-	gpio_disable_pulls(PROBE_PIN_SWDIO);
+    if (pin_reset >= 0) {
+        gpio_deinit(pin_reset);
+        gpio_disable_pulls(pin_reset);
+    }
+    gpio_deinit(pin_clk);
+    gpio_disable_pulls(pin_clk);
+    gpio_deinit(pin_dio);
+    gpio_disable_pulls(pin_dio);
 }
 
-static inline void probe_sm_init(pio_sm_config* sm_config) {
+static inline void probe_sm_init(pio_sm_config* sm_config, uint sm, uint pin_clk, uint pin_dio, int pin_di) {
 
     // Set SWCLK as a sideset pin
-    sm_config_set_sideset_pins(sm_config, PROBE_PIN_SWCLK);
+    sm_config_set_sideset_pins(sm_config, pin_clk);
 
     // Set SWDIO offset
-    sm_config_set_out_pins(sm_config, PROBE_PIN_SWDIO, 1);
-    sm_config_set_set_pins(sm_config, PROBE_PIN_SWDIO, 1);
-#ifdef PROBE_IO_SWDI
-    sm_config_set_in_pins(sm_config, PROBE_PIN_SWDI);
-#else
-    sm_config_set_in_pins(sm_config, PROBE_PIN_SWDIO);
-#endif
-
+    sm_config_set_out_pins(sm_config, pin_dio, 1);
+    sm_config_set_set_pins(sm_config, pin_dio, 1);
+    sm_config_set_in_pins(sm_config, pin_di >= 0 ? (uint)pin_di : pin_dio);
 
     // Set SWD and SWDIO pins as output to start. This will be set in the sm
-    pio_sm_set_consecutive_pindirs(pio0, PROBE_SM, PROBE_PIN_OFFSET, 2, true);
+    pio_sm_set_consecutive_pindirs(pio0, sm, pin_clk, 2, true);
 
     // shift output right, autopull off, autopull threshold
     sm_config_set_out_shift(sm_config, true, false, 0);

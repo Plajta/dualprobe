@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2021 Raspberry Pi (Trading) Ltd.
  * Copyright (c) 2021 Peter Lawrence
+ * Copyright (c) 2026 Plajta corp.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -258,7 +259,10 @@ void tud_suspend_cb(bool remote_wakeup_en)
   /* Were we actually configured? If not, threads don't exist */
   if (was_configured) {
 	  vTaskSuspend(uart_taskhandle);
-	  vTaskSuspend(dap_taskhandle);
+    for (int i = 0; i < PROBE_COUNT; i++) {
+      if (dap_taskhandles[i])
+        vTaskSuspend(dap_taskhandles[i]);
+    }
     if (autobaud_running)
       autobaud_wait_stop();
     vTaskSuspend(autobaud_taskhandle);
@@ -271,7 +275,10 @@ void tud_resume_cb(void)
   probe_info("Resumed\n");
   if (was_configured) {
     vTaskResume(uart_taskhandle);
-    vTaskResume(dap_taskhandle);
+    for (int i = 0; i < PROBE_COUNT; i++) {
+      if (dap_taskhandles[i])
+        vTaskResume(dap_taskhandles[i]);
+    }
     vTaskResume(autobaud_taskhandle);
   }
 }
@@ -280,9 +287,14 @@ void tud_unmount_cb(void)
 {
   probe_info("Disconnected/reset\n");
   vTaskSuspend(uart_taskhandle);
-  vTaskSuspend(dap_taskhandle);
   vTaskDelete(uart_taskhandle);
-  vTaskDelete(dap_taskhandle);
+  for (int i = 0; i < PROBE_COUNT; i++) {
+    if (dap_taskhandles[i]) {
+      vTaskSuspend(dap_taskhandles[i]);
+      vTaskDelete(dap_taskhandles[i]);
+      dap_taskhandles[i] = NULL;
+    }
+  }
   if (autobaud_running)
     autobaud_wait_stop();
   vTaskSuspend(autobaud_taskhandle);
@@ -297,12 +309,19 @@ void tud_mount_cb(void)
     /* UART needs to preempt USB as if we don't, characters get lost */
     xTaskCreate(cdc_thread, "UART", configMINIMAL_STACK_SIZE, NULL, UART_TASK_PRIO, &uart_taskhandle);
     /* Lowest priority thread is debug - need to shuffle buffers before we can toggle swd... */
-    xTaskCreate(dap_thread, "DAP", configMINIMAL_STACK_SIZE, NULL, DAP_TASK_PRIO, &dap_taskhandle);
+    for (int i = 0; i < PROBE_COUNT; i++) {
+      char name[8] = "DAP0";
+      name[3] = '0' + i;
+      xTaskCreate(dap_thread, name, configMINIMAL_STACK_SIZE, (void*)(uintptr_t)i, DAP_TASK_PRIO, &dap_taskhandles[i]);
+      probe_channels[i].taskhandle = dap_taskhandles[i];
+    }
     /* Autobaud detection using PIO as a frequency counter */
     xTaskCreate(autobaud_thread, "ABR", configMINIMAL_STACK_SIZE, NULL, AUTOBAUD_TASK_PRIO, &autobaud_taskhandle);
 #if(configNUMBER_OF_CORES > 1)
     vTaskCoreAffinitySet(autobaud_taskhandle, (1 << 1));
-    vTaskCoreAffinitySet(dap_taskhandle, (1 << 1));
+    for (int i = 0; i < PROBE_COUNT; i++) {
+      vTaskCoreAffinitySet(dap_taskhandles[i], (1 << 1));
+    }
     vTaskCoreAffinitySet(uart_taskhandle, (1 << 0));
 #endif
     was_configured = 1;

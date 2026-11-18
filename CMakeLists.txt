@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
 
-# build for the Raspberry Pi Debug Probe by default
-set(PICO_BOARD debug_probe CACHE STRING "Board type")
-
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
 include(pico_sdk_import.cmake)

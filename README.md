@@ -1,3 +1,16 @@
+# dualprobe
+Fork of Raspberry Pi's [debugprobe](https://github.com/raspberrypi/debugprobe/) adjusted to support *two* SWD targets, used as firmware for PlajTime's DEV Charger debug probe.
+
+Dual probe support itself is in a separate commit for easier rebase-ability (for us) and cherry-pick-ability (for an interested third-party).
+
+On top of support for two SWD targets this repo also adds:
+- Ability to remove UART from build
+- Probe activity LEDs (attached/not attached)
+- Ability to set the USB vendor string for separate boards
+- `.gitignore` (why did RPi not include that?)
+
+
+The original README:
 # Debugprobe
 
 Firmware source for the Raspberry Pi Debug Probe SWD/UART accessory. Can also be run on a Raspberry Pi Pico or Pico 2.
@@ -81,4 +94,3 @@ To enable AutoBaud, configure the USB CDC port to the following custom baud rate
 > **Note:** Some Linux serial tools cannot set custom baud values. PuTTY on Windows and any terminal that supports arbitrary baud rates works.
 
 Changing the baud rate to any other value disables AutoBaud.
-

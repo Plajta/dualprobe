@@ -2,6 +2,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2019 Ha Thach (tinyusb.org)
+ * Copyright (c) 2026 Plajta corp.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +26,8 @@
 
 #ifndef _TUSB_CONFIG_H_
 #define _TUSB_CONFIG_H_
+
+#include "board_config.h"
 
 #ifdef __cplusplus
  extern "C" {
@@ -63,7 +66,11 @@
 
 //------------- CLASS -------------//
 #define CFG_TUD_HID             1
+#ifdef PROBE_CDC_UART
 #define CFG_TUD_CDC             1
+#else
+#define CFG_TUD_CDC             0
+#endif
 #define CFG_TUD_MSC             0
 #define CFG_TUD_MIDI            0
 #define CFG_TUD_VENDOR          1

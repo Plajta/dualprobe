@@ -2,6 +2,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2021 Raspberry Pi (Trading) Ltd.
+ * Copyright (c) 2026 Plajta corp.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +31,8 @@
 #include "autobaud.h"
 
 #include "probe_config.h"
+
+#ifdef PROBE_CDC_UART
 
 TaskHandle_t uart_taskhandle;
 TickType_t last_wake, interval = 100;
@@ -341,3 +344,5 @@ void tud_cdc_send_break_cb(uint8_t itf, uint16_t wValue) {
     break;
   }
 }
+
+#endif // PROBE_CDC_UART

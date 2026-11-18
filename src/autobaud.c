@@ -10,6 +10,9 @@
 
 #include "autobaud.h"
 #include "probe_config.h"
+
+#ifdef PROBE_CDC_UART
+
 #include "autobaud.pio.h"
 
 // DMA buffer size
@@ -385,3 +388,5 @@ void autobaud_thread(void * param) {
         }
     }
 }
+
+#endif // PROBE_CDC_UART

@@ -72,10 +72,26 @@ enum
 {
   ITF_NUM_PROBE_0,
   ITF_NUM_PROBE_1,
+#ifdef PROBE_CDC_UART
   ITF_NUM_CDC_COM,
   ITF_NUM_CDC_DATA,
+#endif
   ITF_NUM_RESET,
   ITF_NUM_TOTAL
+};
+
+enum
+{
+  STRID_LANGID = 0,
+  STRID_MANUFACTURER,
+  STRID_PRODUCT,
+  STRID_SERIAL,
+  STRID_PROBE_0,
+  STRID_PROBE_1,
+#ifdef PROBE_CDC_UART
+  STRID_CDC,
+#endif
+  STRID_RESET,
 };
 
 #define DAP_0_OUT_EP_NUM        0x01
@@ -84,11 +100,15 @@ enum
 #define DAP_1_OUT_EP_NUM        0x02
 #define DAP_1_IN_EP_NUM         0x82
 
+#ifdef PROBE_CDC_UART
 #define CDC_NOTIFICATION_EP_NUM 0x83
 #define CDC_DATA_OUT_EP_NUM     0x04
 #define CDC_DATA_IN_EP_NUM      0x85
 
 #define CONFIG_TOTAL_LEN  (TUD_CONFIG_DESC_LEN + (2 * TUD_VENDOR_DESC_LEN) + TUD_CDC_DESC_LEN + TUD_RPI_RESET_DESC_LEN)
+#else
+#define CONFIG_TOTAL_LEN  (TUD_CONFIG_DESC_LEN + (2 * TUD_VENDOR_DESC_LEN) + TUD_RPI_RESET_DESC_LEN)
+#endif
 
 static uint8_t const desc_hid_report[] =
 {
@@ -105,13 +125,15 @@ uint8_t desc_configuration[] =
 {
   TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, 0, 100),
   // Interface 0: Probe 0 (Bulk)
-  TUD_VENDOR_DESCRIPTOR(ITF_NUM_PROBE_0, 4, DAP_0_OUT_EP_NUM, DAP_0_IN_EP_NUM, 64),
+  TUD_VENDOR_DESCRIPTOR(ITF_NUM_PROBE_0, STRID_PROBE_0, DAP_0_OUT_EP_NUM, DAP_0_IN_EP_NUM, 64),
   // Interface 1: Probe 1 (Bulk)
-  TUD_VENDOR_DESCRIPTOR(ITF_NUM_PROBE_1, 5, DAP_1_OUT_EP_NUM, DAP_1_IN_EP_NUM, 64),
+  TUD_VENDOR_DESCRIPTOR(ITF_NUM_PROBE_1, STRID_PROBE_1, DAP_1_OUT_EP_NUM, DAP_1_IN_EP_NUM, 64),
+#ifdef PROBE_CDC_UART
   // Interface 2 + 3: CDC UART
-  TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_COM, 6, CDC_NOTIFICATION_EP_NUM, 64, CDC_DATA_OUT_EP_NUM, CDC_DATA_IN_EP_NUM, 64),
+  TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_COM, STRID_CDC, CDC_NOTIFICATION_EP_NUM, 64, CDC_DATA_OUT_EP_NUM, CDC_DATA_IN_EP_NUM, 64),
+#endif
   // Interface 4: Reset interface
-  TUD_RPI_RESET_DESCRIPTOR(ITF_NUM_RESET, 7),
+  TUD_RPI_RESET_DESCRIPTOR(ITF_NUM_RESET, STRID_RESET),
 };
 
 // Invoked when received GET CONFIGURATION DESCRIPTOR
@@ -120,8 +142,10 @@ uint8_t desc_configuration[] =
 uint8_t const * tud_descriptor_configuration_cb(uint8_t index)
 {
   (void) index; // for multiple configurations
+#ifdef PROBE_CDC_UART
   /* Hack in CAP_BREAK support */
   desc_configuration[CONFIG_TOTAL_LEN - TUD_RPI_RESET_DESC_LEN - TUD_CDC_DESC_LEN + 8 + 9 + 5 + 5 + 4 - 1] = 0x6;
+#endif
   return desc_configuration;
 }
 
@@ -136,14 +160,16 @@ uint8_t const * tud_descriptor_configuration_cb(uint8_t index)
 // array of pointer to string descriptors
 char const* string_desc_arr [] =
 {
-  (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
-  PROBE_VENDOR_STRING, // 1: Manufacturer
-  PROBE_PRODUCT_STRING, // 2: Product
-  usb_serial,     // 3: Serial, uses flash unique ID
-  "CMSIS-DAP v2 (Probe 0)", // 4: Interface descriptor for Probe 0
-  "CMSIS-DAP v2 (Probe 1)", // 5: Interface descriptor for Probe 1
-  "CDC-ACM UART Interface", // 6: Interface descriptor for CDC
-  "Reset", // 7: Interface descriptor for Reset
+  [STRID_LANGID]       = (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
+  [STRID_MANUFACTURER] = PROBE_VENDOR_STRING, // 1: Manufacturer
+  [STRID_PRODUCT]      = PROBE_PRODUCT_STRING, // 2: Product
+  [STRID_SERIAL]       = usb_serial,     // 3: Serial, uses flash unique ID
+  [STRID_PROBE_0]      = "CMSIS-DAP v2 (Probe 0)", // Interface descriptor for Probe 0
+  [STRID_PROBE_1]      = "CMSIS-DAP v2 (Probe 1)", // Interface descriptor for Probe 1
+#ifdef PROBE_CDC_UART
+  [STRID_CDC]          = "CDC-ACM UART Interface", // Interface descriptor for CDC
+#endif
+  [STRID_RESET]        = "Reset", // Interface descriptor for Reset
 };
 
 static uint16_t _desc_str[32];

@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.12)
 
+list(APPEND PICO_BOARD_HEADER_DIRS ${CMAKE_CURRENT_LIST_DIR}/boards)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Required for clangd
+
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
 include(pico_sdk_import.cmake)

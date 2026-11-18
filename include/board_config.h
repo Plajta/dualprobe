@@ -28,7 +28,9 @@
 #define BOARD_CONFIG_H_
 
 #include "pico/stdlib.h"
-#if defined(RASPBERRYPI_PICO) || defined(RASPBERRYPI_PICO2)
+#if defined(PLAJTA_PLAJTIME_DEVCHARGER)
+#include "board_plajta_plajtime_devcharger_config.h"
+#elif defined(RASPBERRYPI_PICO) || defined(RASPBERRYPI_PICO2)
 #include "board_pico_config.h"
 #else
 #error Unsupported board
